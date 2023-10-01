@@ -15,7 +15,8 @@ const app = express();
 app.use(session({
   secret: process.env.SESSION_SECRET || '',
   resave: false ,
-  saveUninitialized: true ,
+  saveUninitialized: true,
+  cookie: { maxAge: 60 * 60 * 1000}
 }));
 
 app.use(passport.initialize()); 
@@ -35,7 +36,7 @@ passport.deserializeUser(async (id, done) => {
 }) 
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({credentials: true, origin: 'http://localhost:5173'}));
 
 setupRoutes(app);
 
