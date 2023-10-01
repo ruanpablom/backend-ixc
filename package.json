@@ -19,18 +19,31 @@
   },
   "homepage": "https://github.com/ruanpablom/backend-ixc#readme",
   "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
     "@types/cors": "^2.8.14",
     "@types/express": "^4.17.18",
+    "@types/express-session": "^1.17.8",
     "@types/node": "^20.7.1",
+    "@types/passport": "^1.0.13",
+    "@types/passport-local": "^1.0.36",
     "nodemon": "^3.0.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@prisma/client": "^5.3.1",
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
+    "express-session": "^1.17.3",
     "fast-glob": "^3.3.1",
-    "mongodb": "^6.1.0"
+    "mongodb": "^6.1.0",
+    "passport": "^0.6.0",
+    "passport-local": "^1.0.0",
+    "prisma": "^5.3.1",
+    "react-router-dom": "^6.16.0",
+    "zod": "^3.22.2"
   }
 }
