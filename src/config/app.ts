@@ -24,7 +24,6 @@ app.use(passport.session());
 passport.use(new LocalStrategy (authUser));
 
 passport.serializeUser((user, done) => {  
-  console.log(`Value of "User" in serializeUser function ----> ${user}`)
   return done(null, user.id);
 });
 
