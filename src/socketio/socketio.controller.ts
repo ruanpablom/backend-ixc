@@ -16,6 +16,13 @@ export const initializeUser = async (socket: Socket, connectedUsers: string[]) =
     // @ts-ignore
     users.map((user) => connectedUsers.includes(user.id) ? user.connected = true : user.connected = false);
     socket.emit("users", users);
+
+    const dbMessages = await prisma.message.findMany({ include: { user: { select: {id: true, name: true, email: true, role: true} } } });
+
+    if(dbMessages.length > 0){
+      socket.emit("messages", dbMessages);
+    }
+
   }catch (err) {
     console.log(err);
   }
