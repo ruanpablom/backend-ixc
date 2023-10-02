@@ -55,8 +55,12 @@ io.use((socket, next) => {
   }
 });
 
+let connectedUsers: string[] = [];
+
 io.on("connect", (socket) => {
-  initializeUser(socket);
+  // @ts-ignore
+  connectedUsers.push(socket.request.user.id);  
+  initializeUser(socket, connectedUsers);
 
   socket.on("message", (message) => onMessage(socket, message));
   // @ts-ignore
@@ -64,6 +68,24 @@ io.on("connect", (socket) => {
 
   session.socketId = socket.id;
   session.save();
+});
+
+io.on("disconnect", (socket) => {
+  console.log('disconnect')
+  // @ts-ignore
+  connectedUsers = connectedUsers.filter((user) => user.id !== socket.request.user.id);
+  // @ts-ignore
+  socket.broadcast.emit("disconnected", socket.request.user.id);
+});
+
+io.sockets.on('connection', function(socket) {
+
+  socket.on('disconnect', function() {
+    // @ts-ignore
+     console.log('Got disconnect!', socket.request.user.id);
+     // @ts-ignore
+     socket.broadcast.emit("disconnected", socket.request.user.id);
+  });
 });
 
 passport.use(new LocalStrategy (authUser));
