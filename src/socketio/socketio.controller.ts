@@ -57,7 +57,6 @@ export const onConnect = (socket: Socket) => {
 }
 
 export const onSocektsConnection = (socket: Socket) => {
-
   socket.on('disconnect', () => {
     // @ts-ignore
      console.log('Got disconnect!', socket.request.user.id);

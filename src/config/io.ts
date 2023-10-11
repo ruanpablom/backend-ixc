@@ -1,3 +1,4 @@
+import http from "http"; 
 import { Server, Socket } from "socket.io";
 import { corsConfig } from "./cors-config";
 import { RequestHandler } from "express";
@@ -14,7 +15,6 @@ const wrap = (middleware: RequestHandler) => (socket: SocketOrRequest, next: (er
 // @ts-ignore  
   middleware(socket.request, {} as any, next);
 
-import http from "http"; // import http module
 
 export const setupIo = (httpServer: http.Server) => { // change the type of httpServer parameter to http.Server
   const io = new Server(httpServer, {
