@@ -40,3 +40,28 @@ export const onMessage = async (socket: Socket, message: Message) => {
     console.log(err);
   }
 }
+
+let connectedUsers: string[] = [];
+
+export const onConnect = (socket: Socket) => {
+  // @ts-ignore
+  connectedUsers.push(socket.request.user.id);  
+  initializeUser(socket, connectedUsers);
+
+  socket.on("message", (message) => onMessage(socket, message));
+  // @ts-ignore
+  const session = socket.request.session;
+
+  session.socketId = socket.id;
+  session.save();
+}
+
+export const onSocektsConnection = (socket: Socket) => {
+
+  socket.on('disconnect', () => {
+    // @ts-ignore
+     console.log('Got disconnect!', socket.request.user.id);
+     // @ts-ignore
+     socket.broadcast.emit("disconnected", socket.request.user.id);
+  });
+}

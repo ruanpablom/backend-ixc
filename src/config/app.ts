@@ -1,92 +1,30 @@
-import express, {  Request, RequestHandler } from 'express';
+import express  from 'express';
 import 'express-async-errors';
 import cors from 'cors';
 import passport from 'passport'
-import session from 'express-session'
 import { Strategy as LocalStrategy } from 'passport-local'
-import { Server, Socket } from 'socket.io'
+import { createServer } from 'node:http'
 
 import setupRoutes from './routes';
 import responseError from '../middlewares/response-error.middleware';
 import { authUser } from '../infra/passport';
 import { prisma } from '../infra/prisma';
 import { corsConfig } from './cors-config';
-import { ExtendedError } from 'socket.io/dist/namespace';
-import { initializeUser, onMessage } from '../socketio/socketio.controller';
+import { setupIo } from './io';
+import { sessionMiddleware } from '../middlewares/session.middleware';
 
-type SocketOrRequest = Socket | { request: { session: any } };
 
 const app = express();
-export const server = require("http").createServer(app);
-const io = new Server(server, {
-  cors: corsConfig,
-});
+
+export const server = createServer(app);
 
 app.use(express.json());
 app.use(cors(corsConfig));
-
-const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || '',
-  name:'sid',
-  resave: false ,
-  saveUninitialized: false,
-  cookie: { maxAge: 60 * 60 * 1000},
-})
 
 app.use(sessionMiddleware);
 
 app.use(passport.initialize()); 
 app.use(passport.session()); 
-
-const wrap = (middleware: RequestHandler) => (socket: SocketOrRequest, next: (err?: ExtendedError) => void) =>
-// @ts-ignore  
-  middleware(socket.request, {} as any, next);
-
-io.use(wrap(sessionMiddleware));
-io.use(wrap(passport.initialize()));
-io.use(wrap(passport.session()));
-
-io.use((socket, next) => {
-  // @ts-ignore
-  if (socket.request.user) {
-    next();
-  } else {
-    next(new Error("unauthorized"));
-  }
-});
-
-let connectedUsers: string[] = [];
-
-io.on("connect", (socket) => {
-  // @ts-ignore
-  connectedUsers.push(socket.request.user.id);  
-  initializeUser(socket, connectedUsers);
-
-  socket.on("message", (message) => onMessage(socket, message));
-  // @ts-ignore
-  const session = socket.request.session;
-
-  session.socketId = socket.id;
-  session.save();
-});
-
-io.on("disconnect", (socket) => {
-  console.log('disconnect')
-  // @ts-ignore
-  connectedUsers = connectedUsers.filter((user) => user.id !== socket.request.user.id);
-  // @ts-ignore
-  socket.broadcast.emit("disconnected", socket.request.user.id);
-});
-
-io.sockets.on('connection', function(socket) {
-
-  socket.on('disconnect', function() {
-    // @ts-ignore
-     console.log('Got disconnect!', socket.request.user.id);
-     // @ts-ignore
-     socket.broadcast.emit("disconnected", socket.request.user.id);
-  });
-});
 
 passport.use(new LocalStrategy (authUser));
 
@@ -102,6 +40,8 @@ passport.deserializeUser(async (id, done) => {
 }) 
 
 setupRoutes(app);
+
+setupIo(server);
 
 app.use(responseError)
 
