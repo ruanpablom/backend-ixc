@@ -10,6 +10,7 @@ import { corsConfig } from './cors-config';
 import { setupIo } from './io';
 import { sessionMiddleware } from '../middlewares/session.middleware';
 import { passportSetup } from './passport';
+import { setupRedis } from '../infra/redis';
 
 
 const app = express();
@@ -23,7 +24,9 @@ app.use(passport.initialize());
 app.use(passport.session()); 
 passportSetup();
 setupRoutes(app);
+setupRedis();
 setupIo(server);
-app.use(responseError)
+
+app.use(responseError);
 
 export default app;

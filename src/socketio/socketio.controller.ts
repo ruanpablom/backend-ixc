@@ -1,6 +1,7 @@
 import { Message } from "@prisma/client";
 import { Socket } from "socket.io";
 import { prisma } from "../infra/prisma";
+import { redis } from "../infra/redis";
 
 export const initializeUser = async (socket: Socket, connectedUsers: string[]) => {
   // @ts-ignore
@@ -12,9 +13,10 @@ export const initializeUser = async (socket: Socket, connectedUsers: string[]) =
   socket.emit("connected", true, socket.request.user.id);
 
   try {
-    const users = await prisma.user.findMany({select: {id: true, name: true, email: true, role: true}});
+    let users = await prisma.user.findMany({select: {id: true, name: true, email: true, role: true}});
     // @ts-ignore
-    users.map((user) => connectedUsers.includes(user.id) ? user.connected = true : user.connected = false);
+    users = users.map((user) => connectedUsers.includes(user.id) ? {...user, connected: true} : {...user, connected: false});
+    
     socket.emit("users", users);
 
     const dbMessages = await prisma.message.findMany({ include: { user: { select: {id: true, name: true, email: true, role: true} } } });
@@ -41,11 +43,13 @@ export const onMessage = async (socket: Socket, message: Message) => {
   }
 }
 
-let connectedUsers: string[] = [];
-
-export const onConnect = (socket: Socket) => {
+export const onConnect = async (socket: Socket) => {
+  let connectedUsers: string[] = JSON.parse(await redis.get("connectedUsers") || '[]');
   // @ts-ignore
-  connectedUsers.push(socket.request.user.id);  
+  connectedUsers.push(socket.request.user.id);
+  await redis.set("connectedUsers", JSON.stringify(connectedUsers));
+
+  connectedUsers = JSON.parse(await redis.get("connectedUsers") || '[]');
   initializeUser(socket, connectedUsers);
 
   socket.on("message", (message) => onMessage(socket, message));
@@ -57,9 +61,13 @@ export const onConnect = (socket: Socket) => {
 }
 
 export const onSocektsConnection = (socket: Socket) => {
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     // @ts-ignore
      console.log('Got disconnect!', socket.request.user.id);
+     let connectedUsers: string[] = JSON.parse(await redis.get("connectedUsers") || '[]');
+     // @ts-ignore
+     connectedUsers = connectedUsers.filter((connectedUserId) => connectedUserId !== socket.request.user.id);
+     await redis.set("connectedUsers", JSON.stringify(connectedUsers));
      // @ts-ignore
      socket.broadcast.emit("disconnected", socket.request.user.id);
   });
