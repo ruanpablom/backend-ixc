@@ -24,8 +24,10 @@ app.use(passport.initialize());
 app.use(passport.session()); 
 passportSetup();
 setupRoutes(app);
-setupRedis();
-setupIo(server);
+
+export const ioServer = setupIo(server);
+
+setupRedis(ioServer);
 
 app.use(responseError);
 

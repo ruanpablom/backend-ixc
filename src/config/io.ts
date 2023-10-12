@@ -15,8 +15,7 @@ const wrap = (middleware: RequestHandler) => (socket: SocketOrRequest, next: (er
 // @ts-ignore  
   middleware(socket.request, {} as any, next);
 
-
-export const setupIo = (httpServer: http.Server) => { // change the type of httpServer parameter to http.Server
+export const setupIo = (httpServer: http.Server): Server => {
   const io = new Server(httpServer, {
     cors: corsConfig,
   });
@@ -24,11 +23,9 @@ export const setupIo = (httpServer: http.Server) => { // change the type of http
   io.use(wrap(sessionMiddleware));
   io.use(wrap(passport.initialize()));
   io.use(wrap(passport.session()));
-
   io.use(authorizationIo);
-
   io.on("connect", onConnect);
-
   io.sockets.on('connection', onSocektsConnection);
+  return io;
 }
 
