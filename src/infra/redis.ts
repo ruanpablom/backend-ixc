@@ -1,6 +1,5 @@
 import { createClient } from 'redis';
 import { Server as IoServer } from 'socket.io';
-import { server } from '../config/app';
 
 
 export const redis = createClient({
